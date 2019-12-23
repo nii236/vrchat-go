@@ -1,7 +1,7 @@
 package client_test
 
 import (
-	"fmt"
+	"os"
 	"testing"
 	"vrchat-go/client"
 )
@@ -11,9 +11,10 @@ func TestClient_Authenticate(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
 	}
-	me, err := c.Authenticate()
+	user := os.Getenv("VRCHAT_USER")
+	pass := os.Getenv("VRCHAT_PASS")
+	_, err = c.Authenticate(user, pass)
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
 	}
-	fmt.Printf("%+v", me)
 }

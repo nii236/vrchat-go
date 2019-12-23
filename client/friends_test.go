@@ -10,10 +10,6 @@ func TestClient_FriendList(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
 	}
-	_, err = c.Authenticate()
-	if err != nil {
-		t.Errorf("unexpected err: %v", err)
-	}
 	_, err = c.FriendList(true)
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)

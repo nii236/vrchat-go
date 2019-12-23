@@ -16,8 +16,8 @@ import (
 type Client struct {
 	baseURL string
 	*http.Client
-	user string
-	pass string
+	authToken string
+	apiKey    string
 }
 
 func NewClient(baseURL string) (*Client, error) {
@@ -29,22 +29,34 @@ func NewClient(baseURL string) (*Client, error) {
 		Jar: jar,
 	}
 
-	user := os.Getenv("USER")
-	pass := os.Getenv("PASS")
+	authToken := os.Getenv("VRCHAT_AUTH_TOKEN")
+	apiKey := os.Getenv("VRCHAT_API_KEY")
 
-	c := &Client{baseURL, httpClient, user, pass}
+	c := &Client{baseURL, httpClient, authToken, apiKey}
 	return c, nil
 }
 
-func (c *Client) Authenticate() (*AuthResponse, error) {
+func (c *Client) Authenticate(user, pass string) (*AuthResponse, error) {
 	req, err := http.NewRequest("GET", buildAuthURL(c.baseURL), nil)
 	if err != nil {
 		return nil, err
 	}
-	req.SetBasicAuth(c.user, c.pass)
+	req.SetBasicAuth(user, pass)
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
+	}
+	u, err := url.Parse(ReleaseAPIURL)
+	if err != nil {
+		return nil, err
+	}
+	for _, cookie := range c.Client.Jar.Cookies(u) {
+		if cookie.Name == "apiKey" {
+			c.apiKey = cookie.Value
+		}
+		if cookie.Name == "auth" {
+			c.authToken = cookie.Value
+		}
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
@@ -116,18 +128,14 @@ func (c *Client) Do(req *http.Request) (io.ReadCloser, error) {
 	}
 
 	q := req.URL.Query()
-	apiKey := ""
-	for _, cookie := range c.Client.Jar.Cookies(u) {
-		if cookie.Name == "apiKey" {
-			apiKey = cookie.Value
-		}
+	if c.apiKey == "" {
+		return nil, errors.New("no apikey in client")
 	}
-	if apiKey == "" {
-		return nil, errors.New("no apikey in cookie")
-	}
-	q.Set("apiKey", apiKey)
+	authTokenCookie := &http.Cookie{Name: "auth", Value: c.authToken}
+	apiKeyCookie := &http.Cookie{Name: "apiKey", Value: c.apiKey}
+	c.Jar.SetCookies(u, []*http.Cookie{authTokenCookie, apiKeyCookie})
+	q.Set("apiKey", c.apiKey)
 	req.URL.RawQuery = q.Encode()
-	fmt.Println(req.URL)
 	resp, err := c.Client.Do(req)
 	if resp.StatusCode != 200 {
 		result := &ErrorResponse{}

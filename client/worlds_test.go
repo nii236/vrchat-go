@@ -13,10 +13,6 @@ func TestClient_WorldList(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
 	}
-	_, err = c.Authenticate()
-	if err != nil {
-		t.Errorf("unexpected err: %v", err)
-	}
 	_, err = c.WorldList()
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
@@ -26,10 +22,6 @@ func TestClient_WorldList(t *testing.T) {
 
 func TestClient_WorldGet(t *testing.T) {
 	c, err := client.NewClient(client.ReleaseAPIURL)
-	if err != nil {
-		t.Errorf("unexpected err: %v", err)
-	}
-	_, err = c.Authenticate()
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
 	}

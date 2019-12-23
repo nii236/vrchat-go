@@ -41,9 +41,6 @@ func (c *Client) WorldGet(worldID string) (*World, error) {
 	return result, nil
 }
 
-type ReleaseStatus string
-type UnityPackage string
-type Instance string
 type WorldListItem struct {
 	ID                  string    `json:"id"`
 	Name                string    `json:"name"`
