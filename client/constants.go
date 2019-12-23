@@ -4,6 +4,10 @@ import "fmt"
 
 const ReleaseAPIURL = "https://api.vrchat.cloud/api/1"
 
+func buildGetFriendsURL(baseURL string) string {
+	return fmt.Sprintf("%s/auth/user/friends", baseURL)
+}
+
 func buildAuthURL(baseURL string) string {
 	return fmt.Sprintf("%s/auth/user", baseURL)
 }

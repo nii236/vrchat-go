@@ -9,13 +9,14 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
 )
 
 type Client struct {
 	baseURL string
 	*http.Client
-	// apiKey    string
-	// authToken string
+	user string
+	pass string
 }
 
 func NewClient(baseURL string) (*Client, error) {
@@ -26,16 +27,20 @@ func NewClient(baseURL string) (*Client, error) {
 	httpClient := &http.Client{
 		Jar: jar,
 	}
-	c := &Client{baseURL, httpClient}
+
+	user := os.Getenv("USER")
+	pass := os.Getenv("PASS")
+
+	c := &Client{baseURL, httpClient, user, pass}
 	return c, nil
 }
 
-func (c *Client) Authenticate(user, pass string) error {
+func (c *Client) Authenticate() error {
 	req, err := http.NewRequest("GET", buildAuthURL(c.baseURL), nil)
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth(user, pass)
+	req.SetBasicAuth(c.user, c.pass)
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		return err

@@ -6,23 +6,6 @@ import (
 	"time"
 )
 
-func (c *Client) WorldInstance(worldID string, instanceID string) (*WorldListItem, error) {
-	req, err := http.NewRequest("GET", buildGetWorldInstanceURL(c.baseURL, worldID, instanceID), nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Close()
-	result := &WorldListItem{}
-	err = json.NewDecoder(resp).Decode(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
 func (c *Client) WorldList() ([]*WorldListItem, error) {
 	req, err := http.NewRequest("GET", buildListWorldsURL(c.baseURL), nil)
 	if err != nil {
