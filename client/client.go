@@ -10,6 +10,7 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"os"
+	"time"
 )
 
 type Client struct {
@@ -35,25 +36,77 @@ func NewClient(baseURL string) (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) Authenticate() error {
+func (c *Client) Authenticate() (*AuthResponse, error) {
 	req, err := http.NewRequest("GET", buildAuthURL(c.baseURL), nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.SetBasicAuth(c.user, c.pass)
 	resp, err := c.Client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		b, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return fmt.Errorf("non 200 response: %v %v", resp.StatusCode, string(b))
+		return nil, fmt.Errorf("non 200 response: %v %v", resp.StatusCode, string(b))
 	}
-	return nil
+	result := &AuthResponse{}
+	err = json.NewDecoder(resp.Body).Decode(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+type AuthResponse struct {
+	ID                             string        `json:"id"`
+	Username                       string        `json:"username"`
+	DisplayName                    string        `json:"displayName"`
+	Bio                            string        `json:"bio"`
+	BioLinks                       []interface{} `json:"bioLinks"`
+	PastDisplayNames               []interface{} `json:"pastDisplayNames"`
+	HasEmail                       bool          `json:"hasEmail"`
+	HasPendingEmail                bool          `json:"hasPendingEmail"`
+	Email                          string        `json:"email"`
+	ObfuscatedEmail                string        `json:"obfuscatedEmail"`
+	ObfuscatedPendingEmail         string        `json:"obfuscatedPendingEmail"`
+	EmailVerified                  bool          `json:"emailVerified"`
+	HasBirthday                    bool          `json:"hasBirthday"`
+	Unsubscribe                    bool          `json:"unsubscribe"`
+	Friends                        []string      `json:"friends"`
+	FriendGroupNames               []interface{} `json:"friendGroupNames"`
+	CurrentAvatarImageURL          string        `json:"currentAvatarImageUrl"`
+	CurrentAvatarThumbnailImageURL string        `json:"currentAvatarThumbnailImageUrl"`
+	CurrentAvatar                  string        `json:"currentAvatar"`
+	CurrentAvatarAssetURL          string        `json:"currentAvatarAssetUrl"`
+	AcceptedTOSVersion             int           `json:"acceptedTOSVersion"`
+	SteamID                        string        `json:"steamId"`
+	SteamDetails                   struct {
+	} `json:"steamDetails"`
+	OculusID              string `json:"oculusId"`
+	HasLoggedInFromClient bool   `json:"hasLoggedInFromClient"`
+	HomeLocation          string `json:"homeLocation"`
+	TwoFactorAuthEnabled  bool   `json:"twoFactorAuthEnabled"`
+	Feature               struct {
+		TwoFactorAuth bool `json:"twoFactorAuth"`
+	} `json:"feature"`
+	Status             string        `json:"status"`
+	StatusDescription  string        `json:"statusDescription"`
+	State              string        `json:"state"`
+	Tags               []interface{} `json:"tags"`
+	DeveloperType      string        `json:"developerType"`
+	LastLogin          time.Time     `json:"last_login"`
+	LastPlatform       string        `json:"last_platform"`
+	AllowAvatarCopying bool          `json:"allowAvatarCopying"`
+	IsFriend           bool          `json:"isFriend"`
+	FriendKey          string        `json:"friendKey"`
+	OnlineFriends      []interface{} `json:"onlineFriends"`
+	ActiveFriends      []interface{} `json:"activeFriends"`
+	OfflineFriends     []string      `json:"offlineFriends"`
 }
 
 func (c *Client) Do(req *http.Request) (io.ReadCloser, error) {

@@ -13,7 +13,7 @@ func TestClient_WorldList(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
 	}
-	err = c.Authenticate()
+	_, err = c.Authenticate()
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
 	}
@@ -29,7 +29,7 @@ func TestClient_WorldGet(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
 	}
-	err = c.Authenticate()
+	_, err = c.Authenticate()
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
 	}
