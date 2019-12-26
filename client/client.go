@@ -36,6 +36,46 @@ func NewClient(baseURL string) (*Client, error) {
 	return c, nil
 }
 
+func Token(baseURL, user, pass string) (string, string, error) {
+	req, err := http.NewRequest("GET", buildAuthURL(baseURL), nil)
+	if err != nil {
+		return "", "", err
+	}
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return "", "", err
+	}
+	httpClient := &http.Client{
+		Jar: jar,
+	}
+	req.SetBasicAuth(user, pass)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	if resp.StatusCode != 200 {
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "", "", err
+		}
+		return "", "", fmt.Errorf("non 200 response: %v %v", resp.StatusCode, string(b))
+	}
+	u, err := url.Parse(ReleaseAPIURL)
+	if err != nil {
+		return "", "", err
+	}
+	apiKey := ""
+	authToken := ""
+	for _, cookie := range httpClient.Jar.Cookies(u) {
+		if cookie.Name == "apiKey" {
+			apiKey = cookie.Value
+		}
+		if cookie.Name == "auth" {
+			authToken = cookie.Value
+		}
+	}
+	return apiKey, authToken, nil
+}
 func (c *Client) Authenticate(user, pass string) (*AuthResponse, error) {
 	req, err := http.NewRequest("GET", buildAuthURL(c.baseURL), nil)
 	if err != nil {
