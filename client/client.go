@@ -13,6 +13,9 @@ import (
 	"time"
 )
 
+// ErrNotImplemented is used to stub empty funcs
+var ErrNotImplemented = errors.New("not implemented")
+
 type Client struct {
 	baseURL string
 	*http.Client
@@ -40,14 +43,14 @@ func NewClient(baseURL, authToken, apiKey string) (*Client, error) {
 	return c, nil
 }
 
-func Token(baseURL, user, pass string) (string, string, error) {
+func Token(baseURL, user, pass string) (*AuthResponse, string, string, error) {
 	req, err := http.NewRequest("GET", buildAuthURL(baseURL), nil)
 	if err != nil {
-		return "", "", err
+		return nil, "", "", err
 	}
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		return "", "", err
+		return nil, "", "", err
 	}
 	httpClient := &http.Client{
 		Jar: jar,
@@ -55,18 +58,18 @@ func Token(baseURL, user, pass string) (string, string, error) {
 	req.SetBasicAuth(user, pass)
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return "", "", err
+		return nil, "", "", err
 	}
 	if resp.StatusCode != 200 {
 		b, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return "", "", err
+			return nil, "", "", err
 		}
-		return "", "", fmt.Errorf("non 200 response: %v %v", resp.StatusCode, string(b))
+		return nil, "", "", fmt.Errorf("non 200 response: %v %v", resp.StatusCode, string(b))
 	}
 	u, err := url.Parse(ReleaseAPIURL)
 	if err != nil {
-		return "", "", err
+		return nil, "", "", err
 	}
 	apiKey := ""
 	authToken := ""
@@ -78,46 +81,19 @@ func Token(baseURL, user, pass string) (string, string, error) {
 			authToken = cookie.Value
 		}
 	}
-	return apiKey, authToken, nil
+	data := &AuthResponse{}
+	err = json.NewDecoder(resp.Body).Decode(data)
+	if err != nil {
+		return nil, "", "", err
+	}
+	return data, apiKey, authToken, nil
 }
-func (c *Client) Authenticate(user, pass string) (*AuthResponse, error) {
-	req, err := http.NewRequest("GET", buildAuthURL(c.baseURL), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBasicAuth(user, pass)
-	resp, err := c.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	u, err := url.Parse(ReleaseAPIURL)
-	if err != nil {
-		return nil, err
-	}
-	for _, cookie := range c.Client.Jar.Cookies(u) {
-		if cookie.Name == "apiKey" {
-			c.apiKey = cookie.Value
-		}
-		if cookie.Name == "auth" {
-			c.authToken = cookie.Value
-		}
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		b, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("non 200 response: %v %v", resp.StatusCode, string(b))
-	}
-	result := &AuthResponse{}
-	err = json.NewDecoder(resp.Body).Decode(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+func (c *Client) RemoteConfig() (*RemoteConfigResponse, error) {
+	return nil, ErrNotImplemented
 }
 
+type RemoteConfigResponse struct {
+}
 type AuthResponse struct {
 	ID                             string        `json:"id"`
 	Username                       string        `json:"username"`
