@@ -20,7 +20,7 @@ type Client struct {
 	apiKey    string
 }
 
-func NewClient(baseURL string) (*Client, error) {
+func NewClient(baseURL, authToken, apiKey string) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
@@ -28,9 +28,13 @@ func NewClient(baseURL string) (*Client, error) {
 	httpClient := &http.Client{
 		Jar: jar,
 	}
+	if os.Getenv("VRCHAT_AUTH_TOKEN") != "" {
+		authToken = os.Getenv("VRCHAT_AUTH_TOKEN")
+	}
 
-	authToken := os.Getenv("VRCHAT_AUTH_TOKEN")
-	apiKey := os.Getenv("VRCHAT_API_KEY")
+	if os.Getenv("VRCHAT_API_KEY") != "" {
+		apiKey = os.Getenv("VRCHAT_API_KEY")
+	}
 
 	c := &Client{baseURL, httpClient, authToken, apiKey}
 	return c, nil

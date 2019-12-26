@@ -1,12 +1,12 @@
 package client_test
 
 import (
+	"github.com/nii236/vrchat-go/client"
 	"testing"
-	"vrchat-go/client"
 )
 
 func TestClient_FriendList(t *testing.T) {
-	c, err := client.NewClient(client.ReleaseAPIURL)
+	c, err := client.NewClient("https://api.vrchat.cloud/api/1", "", "")
 	if err != nil {
 		t.Errorf("unexpected err: %v", err)
 	}
